@@ -24,7 +24,9 @@ metric2 := emf.MetricDefinition{
     Name: "metric2",
 }
 
-// If you previously sent a metric that is not going to overwrite now with Record(), call Reset(). Otherwise any non-overwritten metric is going to be reissued with older values.
+// If you previously sent a metric that now is not being overwritten with
+// Record(), call Reset() to drop all previous values. Otherwise any
+// non-overwritten metric is going to get reissued with the old value.
 metric.Reset()
 
 metric.Record("emf-test-ns1", metric1, nil, 10)  // metric without dimension
