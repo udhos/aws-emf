@@ -38,9 +38,7 @@ func (c *cloudWatchMock) PutLogEvents(_ context.Context,
 	_ ...func(*Options)) (*cloudwatchlogs.PutLogEventsOutput, error) {
 
 	var output cloudwatchlogs.PutLogEventsOutput
-	root := map[string]any{
-		"_aws": Metadata{},
-	}
+	root := map[string]any{}
 
 	for _, e := range params.LogEvents {
 		if err := json.Unmarshal([]byte(aws.ToString(e.Message)), &root); err != nil {
