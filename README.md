@@ -24,15 +24,16 @@ metric2 := emf.MetricDefinition{
     Name: "metric2",
 }
 
-// Se você enviou antes alguma métrica que não vai sobrescrever com Record() agora, use o Reset().
-// Caso contrário, as métricas não sobrescritas serão reenvidas.
+// If you previously sent a metric that is not going to overwrite now with Record(), call Reset(). Otherwise any non-overwritten metric is going to be reissued with older values.
 metric.Reset()
 
-metric.Record("emf-test-ns1", metric1, nil, 10)  // métrica sem dimensões
-metric.Record("emf-test-ns1", metric1, dim1, 20) // métrica com 1 dimensão
-metric.Record("emf-test-ns1", metric1, dim2, 30) // métrica com 2 dimensões
-metric.Record("emf-test-ns1", metric2, nil, 40)  // outra métrica sem dimensões
-metric.Record("emf-test-ns2", metric1, nil, 50)  // métrica sem dimensões em outro namespace
+metric.Record("emf-test-ns1", metric1, nil, 10)  // metric without dimension
+metric.Record("emf-test-ns1", metric1, dim1, 20) // metric with 1 dimension
+metric.Record("emf-test-ns1", metric1, dim2, 30) // metric with 2 dimensions
+metric.Record("emf-test-ns1", metric2, nil, 40)  // another metric without dimension
+metric.Record("emf-test-ns2", metric1, nil, 50)  // metric without dimension but at another namespace
+
+metric.Println() // Send metrics to stdout
 ```
 
 # Examples
