@@ -78,9 +78,7 @@ func (c *cloudWatchMock) addMetricDirective(root map[string]any, cwm *MetricDire
 	namespaceName := cwm.Namespace
 	var namespaceDimensionsKeys DimensionSet
 	for _, set := range cwm.Dimensions {
-		for _, dim := range set {
-			namespaceDimensionsKeys = append(namespaceDimensionsKeys, dim)
-		}
+		namespaceDimensionsKeys = append(namespaceDimensionsKeys, set...)
 	}
 	namespaceDimensions := map[string]string{}
 	for _, key := range namespaceDimensionsKeys {
