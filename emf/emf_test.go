@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"sync"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
@@ -912,4 +913,41 @@ func TestCloudWatchSendExample(t *testing.T) {
 	}); errRequire != nil {
 		t.Fatalf("5 - require ns2/metric1 error: %v", errRequire)
 	}
+}
+
+// go test -race -count 1 -run '^TestRace$' ./emf
+func TestRace(_ *testing.T) {
+
+	metric := New(Options{})
+
+	dim1 := map[string]string{"dimKey1": "dimVal1"}
+	dim2 := map[string]string{"dimKey1": "dimVal1", "dimKey2": "dimVal2"}
+
+	metric1 := MetricDefinition{
+		Name:              "metric1",
+		Unit:              "Bytes/Second",
+		StorageResolution: 1,
+	}
+
+	metric2 := MetricDefinition{
+		Name: "metric2",
+	}
+
+	var wg sync.WaitGroup
+
+	for range 10000 {
+		wg.Add(1)
+		go func() {
+			metric.Reset()
+			metric.Record("emf-test-ns1", metric1, nil, 10)  // métrica sem dimensões
+			metric.Record("emf-test-ns1", metric1, dim1, 20) // métrica com 1 dimensão
+			metric.Record("emf-test-ns1", metric1, dim2, 30) // métrica com 2 dimensões
+			metric.Record("emf-test-ns1", metric2, nil, 40)  // outra métrica sem dimensões
+			metric.Record("emf-test-ns2", metric1, nil, 50)  // métrica sem dimensões em outro namespace
+			metric.Render()
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
 }

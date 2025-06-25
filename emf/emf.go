@@ -9,6 +9,7 @@ import (
 	"os"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -19,6 +20,7 @@ import (
 type Metric struct {
 	table   map[string]*metricContext // dimensions => context
 	options Options
+	lock    sync.Mutex
 }
 
 type metricContext struct {
@@ -76,16 +78,20 @@ func New(options Options) *Metric {
 // with Record() in the next cycle, use Reset() to clear all metrics
 // before the next cycle. Otherwise those stale metrics will be sent again.
 func (m *Metric) Reset() {
+	m.lock.Lock()
 	m.table = map[string]*metricContext{}
+	m.lock.Unlock()
 }
 
 // Record records a metric.
 func (m *Metric) Record(namespace string, metric MetricDefinition, dimensions map[string]string, value int) {
+	m.lock.Lock()
 	c := m.defineMetric(namespace, metric, dimensions)
 	c.values[metric.Name] = value
 	for k, v := range dimensions {
 		c.values[k] = v
 	}
+	m.lock.Unlock()
 }
 
 func getDimensionKey(namespace string, dimensions map[string]string, dimSet DimensionSet) string {
@@ -197,13 +203,15 @@ func (m *Metric) Render() []string {
 }
 
 func (m *Metric) renderWithTimestamp(t int64) []string {
-	var list []string
+	m.lock.Lock()
+	list := make([]string, 0, len(m.table))
 	for _, c := range m.table {
 		c.meta.Timestamp = t
 		c.values["_aws"] = c.meta
 		data, _ := json.Marshal(c.values)
 		list = append(list, string(data))
 	}
+	m.lock.Unlock()
 	return list
 }
 
